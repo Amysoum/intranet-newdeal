@@ -25,9 +25,8 @@ jobs:
 
       - name: Build de l'image Docker
         run: |
-          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} .
-          docker tag ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} ${{ env.DOCKER_IMAGE }}:latest
-          docker save ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} -o /tmp/image.tar
+          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} -t ${{ env.DOCKER_IMAGE }}:latest .
+          docker save ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} ${{ env.DOCKER_IMAGE }}:latest -o /tmp/image.tar
 
       - name: Sauvegarde de l'image
         uses: actions/upload-artifact@v4
