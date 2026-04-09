@@ -96,14 +96,13 @@ jobs:
           server_port: 587
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "✅ Pipeline reussi - Intranet NewDeal"
+          subject: "Pipeline reussi - Intranet NewDeal"
           to: moussawade@groupeisi.com
-          from: ${{ secrets.MAIL_USERNAME }}
+          from: "GitHub Actions <${{ secrets.MAIL_USERNAME }}>"
           body: |
             Le pipeline CI/CD a reussi !
             Branche : ${{ github.ref_name }}
             Commit : ${{ github.sha }}
-            Image : ${{ env.DOCKER_IMAGE }}:slim
 
       - name: Email echec
         if: ${{ needs.push-image.result == 'failure' || needs.security-scan.result == 'failure' }}
@@ -113,11 +112,10 @@ jobs:
           server_port: 587
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "❌ Pipeline echoue - Intranet NewDeal"
+          subject: "Pipeline echoue - Intranet NewDeal"
           to: moussawade@groupeisi.com
-          from: ${{ secrets.MAIL_USERNAME }}
+          from: "GitHub Actions <${{ secrets.MAIL_USERNAME }}>"
           body: |
             Le pipeline CI/CD a echoue !
             Branche : ${{ github.ref_name }}
             Commit : ${{ github.sha }}
-            Verifiez les logs sur GitHub Actions.
