@@ -24,15 +24,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build de l'image Docker
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          tags: |
-            ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }}
-            ${{ env.DOCKER_IMAGE }}:latest
-          outputs: type=docker,dest=/tmp/image.tar
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} .
+          docker tag ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} ${{ env.DOCKER_IMAGE }}:latest
+          docker save ${{ env.DOCKER_IMAGE }}:${{ env.IMAGE_TAG }} -o /tmp/image.tar
 
       - name: Sauvegarde de l'image
         uses: actions/upload-artifact@v4
