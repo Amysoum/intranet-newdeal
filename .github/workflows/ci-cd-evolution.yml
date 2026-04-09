@@ -1,0 +1,123 @@
+name: CI-CD Evolution Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - prod
+
+env:
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/intranet-newdeal
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build:
+    name: "Job 1 - Build avec nginx:alpine3.23-slim"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code source
+        uses: actions/checkout@v4
+
+      - name: Connexion a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build de l'image slim
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE }}:slim-${{ env.IMAGE_TAG }} -t ${{ env.DOCKER_IMAGE }}:slim .
+          docker save ${{ env.DOCKER_IMAGE }}:slim-${{ env.IMAGE_TAG }} ${{ env.DOCKER_IMAGE }}:slim -o /tmp/image-slim.tar
+
+      - name: Sauvegarde de l'image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-slim
+          path: /tmp/image-slim.tar
+
+  security-scan:
+    name: "Job 2 - Scan Securite CRITICAL bloque"
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Telechargement de l'image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image-slim
+          path: /tmp
+
+      - name: Chargement de l'image Docker
+        run: docker load --input /tmp/image-slim.tar
+
+      - name: Scan Trivy - BLOQUE si CRITICAL
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.DOCKER_IMAGE }}:slim-${{ env.IMAGE_TAG }}"
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL"
+
+  push-image:
+    name: "Job 3 - Push Image slim vers Docker Hub"
+    runs-on: ubuntu-latest
+    needs: security-scan
+    steps:
+      - name: Telechargement de l'image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image-slim
+          path: /tmp
+
+      - name: Chargement de l'image Docker
+        run: docker load --input /tmp/image-slim.tar
+
+      - name: Connexion a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push de l'image slim
+        run: |
+          docker push ${{ env.DOCKER_IMAGE }}:slim-${{ env.IMAGE_TAG }}
+          docker push ${{ env.DOCKER_IMAGE }}:slim
+
+  notify:
+    name: "Job 4 - Notification Email"
+    runs-on: ubuntu-latest
+    needs: [build, security-scan, push-image]
+    if: always()
+    steps:
+      - name: Email succes
+        if: ${{ needs.push-image.result == 'success' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Pipeline reussi - Intranet NewDeal"
+          to: moussawade@groupeisi.com
+          from: ${{ secrets.MAIL_USERNAME }}
+          body: |
+            Le pipeline CI/CD a reussi !
+            Branche : ${{ github.ref_name }}
+            Commit : ${{ github.sha }}
+            Image : ${{ env.DOCKER_IMAGE }}:slim
+
+      - name: Email echec
+        if: ${{ needs.push-image.result == 'failure' || needs.security-scan.result == 'failure' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Pipeline echoue - Intranet NewDeal"
+          to: moussawade@groupeisi.com
+          from: ${{ secrets.MAIL_USERNAME }}
+          body: |
+            Le pipeline CI/CD a echoue !
+            Branche : ${{ github.ref_name }}
+            Commit : ${{ github.sha }}
+            Verifiez les logs sur GitHub Actions.
