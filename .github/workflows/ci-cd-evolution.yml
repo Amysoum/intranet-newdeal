@@ -88,34 +88,16 @@ jobs:
     needs: [build, security-scan, push-image]
     if: always()
     steps:
-      - name: Email succes
+      - name: Notification succes
         if: ${{ needs.push-image.result == 'success' }}
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "Pipeline reussi - Intranet NewDeal"
-          to: moussawade@groupeisi.com
-          from: "GitHub Actions <${{ secrets.MAIL_USERNAME }}>"
-          body: |
-            Le pipeline CI/CD a reussi !
-            Branche : ${{ github.ref_name }}
-            Commit : ${{ github.sha }}
+        run: |
+          echo "✅ Pipeline reussi !"
+          echo "Branche : ${{ github.ref_name }}"
+          echo "Commit : ${{ github.sha }}"
 
-      - name: Email echec
+      - name: Notification echec
         if: ${{ needs.push-image.result == 'failure' || needs.security-scan.result == 'failure' }}
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "Pipeline echoue - Intranet NewDeal"
-          to: moussawade@groupeisi.com
-          from: "GitHub Actions <${{ secrets.MAIL_USERNAME }}>"
-          body: |
-            Le pipeline CI/CD a echoue !
-            Branche : ${{ github.ref_name }}
-            Commit : ${{ github.sha }}
+        run: |
+          echo "❌ Pipeline echoue !"
+          echo "Branche : ${{ github.ref_name }}"
+          echo "Commit : ${{ github.sha }}"
