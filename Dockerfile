@@ -1,4 +1,4 @@
-FROM nginx:alpine3.23-slim
+FROM nginx:alpine3.23
 
 LABEL maintainer="Ministere de la Communication - Senegal"
 LABEL description="Intranet New Deal Technologique du Senegal"

@@ -91,13 +91,13 @@ jobs:
       - name: Notification succes
         if: ${{ needs.push-image.result == 'success' }}
         run: |
-          echo "✅ Pipeline reussi !"
+          echo "Pipeline reussi !"
           echo "Branche : ${{ github.ref_name }}"
           echo "Commit : ${{ github.sha }}"
 
       - name: Notification echec
         if: ${{ needs.push-image.result == 'failure' || needs.security-scan.result == 'failure' }}
         run: |
-          echo "❌ Pipeline echoue !"
+          echo "Pipeline echoue !"
           echo "Branche : ${{ github.ref_name }}"
           echo "Commit : ${{ github.sha }}"
